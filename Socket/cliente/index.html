@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 20px;
+    }
+
+    input {
+      padding: 10px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px;
+      cursor: pointer;
+      background-color: rgb(199, 223, 176);
+      border: 5px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <input type="text" id="nombreUsuario" placeholder="Nombre de usuario">
+  <button onclick="ingresarChat()">Entrar al Chat</button>
+
+  <ul id="mensajesLista"></ul>
+
+  <h4>Enviar mensaje privado:</h4>
+  <input type="text" id="destinatarioInput" placeholder="Destinatario">
+  <input type="text" id="mensajeInput" placeholder="Escribe aquí">
+  <button onclick="enviarMensajePrivado()">Enviar</button>
+
+  <h3>Usuarios Conectados</h3>
+  <ul id="usuariosConectadosLista"></ul>
+
+  <h3>Mensajes Privados</h3>
+  <ul id="mensajesPrivadosLista"></ul>
+
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <script>
+    var socket = io();
+
+    function ingresarChat() {
+      var nombreUsuarioInput = document.getElementById('nombreUsuario');
+      var nombreUsuario = nombreUsuarioInput.value;
+
+      socket.emit('nombreUsuario', nombreUsuario);
+
+      nombreUsuarioInput.disabled = true;
+    }
+
+    function enviarMensaje() {
+      var mensajeInput = document.getElementById('mensajeInput');
+      var mensaje = mensajeInput.value;
+
+      socket.emit('mensajeCliente', mensaje);
+
+      mensajeInput.value = '';
+    }
+
+    function enviarMensajePrivado() {
+      var destinatarioInput = document.getElementById('destinatarioInput');
+      var mensajeInput = document.getElementById('mensajeInput');
+      var destinatario = destinatarioInput.value;
+      var mensaje = mensajeInput.value;
+
+      socket.emit('mensajePrivado', {
+        destinatario: destinatario,
+        mensaje: mensaje
+      });
+
+      mensajeInput.value = '';
+    }
+
+    socket.on('usuariosConectados', (usuarios) => {
+      var usuariosConectadosLista = document.getElementById('usuariosConectadosLista');
+      usuariosConectadosLista.innerHTML = '';
+
+      usuarios.forEach((usuario) => {
+        var nuevoUsuario = document.createElement('li');
+        nuevoUsuario.textContent = usuario;
+        usuariosConectadosLista.appendChild(nuevoUsuario);
+      });
+    });
+
+    socket.on('mensajeServidor', (mensaje) => {
+      var mensajesLista = document.getElementById('mensajesLista');
+      var nuevoMensaje = document.createElement('li');
+      nuevoMensaje.textContent = mensaje;
+      mensajesLista.appendChild(nuevoMensaje);
+    });
+
+    socket.on('mensajePrivado', (mensaje) => {
+      var mensajesPrivadosLista = document.getElementById('mensajesPrivadosLista');
+      var nuevoMensaje = document.createElement('li');
+      nuevoMensaje.textContent = `De ${mensaje.remitente}: ${mensaje.mensaje}`;
+      mensajesPrivadosLista.appendChild(nuevoMensaje);
+    });
+  </script>
+</body>
+</html>
